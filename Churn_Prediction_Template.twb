@@ -1,0 +1,103 @@
+<?xml version='1.0' encoding='utf-8' ?>
+<workbook original-version="20.1" xmlns:user="http://www.tableausoftware.com/xml/user">
+  <document-format-change/> 
+  <datasources>
+    <datasource name="churn_scored_for_tableau" inline='true' version='18.1'>
+      <connection class='textscan' filename='churn_scored_for_tableau.csv' separator=',' header-rows='1' >
+        <relation name='churn_scored_for_tableau' type='textscan' table='churn_scored_for_tableau.csv' />
+      </connection>
+      <extract/>
+      <!-- Declare some fields used in calcs (Tableau will infer most at open) -->
+      <column name='[customerID]' datatype='string' role='dimension' type='nominal'/>
+      <column name='[Churn]' datatype='string' role='measure' type='nominal'/>
+      <column name='[churn_probability]' datatype='real' role='measure' type='quantitative'/>
+      <column name='[risk_band]' datatype='string' role='dimension' type='nominal'/>
+      <column name='[revenue_at_risk]' datatype='real' role='measure' type='quantitative'/>
+      <column name='[tenure]' datatype='integer' role='measure' type='quantitative'/>
+      <column name='[Contract]' datatype='string' role='dimension' type='nominal'/>
+      <column name='[InternetService]' datatype='string' role='dimension' type='nominal'/>
+      <column name='[PaymentMethod]' datatype='string' role='dimension' type='nominal'/>
+
+      <!-- Calculated fields -->
+      <column name='[Predicted Churn Flag]' caption='Predicted Churn Flag' datatype='integer' role='measure' type='quantitative'>
+        <calculation class='tableau' formula='IF [churn_probability] &gt;= 0.5 THEN 1 ELSE 0 END'/>
+      </column>
+      <column name='[Predicted Churn Rate]' caption='Predicted Churn Rate' datatype='real' role='measure' type='quantitative'>
+        <calculation class='tableau' formula='AVG([Predicted Churn Flag])'/>
+      </column>
+      <column name='[Actual Churn Rate]' caption='Actual Churn Rate' datatype='real' role='measure' type='quantitative'>
+        <calculation class='tableau' formula="AVG(IF [Churn] = 'Yes' THEN 1 ELSE 0 END)"/>
+      </column>
+      <column name='[Is High Risk]' caption='Is High Risk' datatype='integer' role='measure' type='quantitative'>
+        <calculation class='tableau' formula="IF [risk_band] = 'High' THEN 1 ELSE 0 END"/>
+      </column>
+      <column name='[Total Revenue at Risk]' caption='Total Revenue at Risk' datatype='real' role='measure' type='quantitative'>
+        <calculation class='tableau' formula='WINDOW_SUM(SUM([revenue_at_risk]))'/>
+      </column>
+    </datasource>
+  </datasources>
+
+  <worksheets>
+    <worksheet name='Executive Overview'>
+      <table>
+        <view>
+          <datasource-dependencies>
+            <datasource caption='churn_scored_for_tableau' name='churn_scored_for_tableau'>
+              <column caption='risk_band' name='[risk_band]' role='dimension'/>
+              <column caption='customerID' name='[customerID]' role='dimension'/>
+              <column caption='Predicted Churn Rate' name='[Predicted Churn Rate]' role='measure'/>
+              <column caption='Actual Churn Rate' name='[Actual Churn Rate]' role='measure'/>
+              <column caption='Is High Risk' name='[Is High Risk]' role='measure'/>
+              <column caption='revenue_at_risk' name='[revenue_at_risk]' role='measure'/>
+            </datasource>
+          </datasource-dependencies>
+          <!-- Leave shelf assignments minimal so user can customize quickly -->
+        </view>
+      </table>
+    </worksheet>
+
+    <worksheet name='Segment Explorer'>
+      <table>
+        <view>
+          <datasource-dependencies>
+            <datasource caption='churn_scored_for_tableau' name='churn_scored_for_tableau'>
+              <column caption='Contract' name='[Contract]' role='dimension'/>
+              <column caption='InternetService' name='[InternetService]' role='dimension'/>
+              <column caption='churn_probability' name='[churn_probability]' role='measure'/>
+              <column caption='tenure' name='[tenure]' role='measure'/>
+            </datasource>
+          </datasource-dependencies>
+        </view>
+      </table>
+    </worksheet>
+
+    <worksheet name='Action Playbook'>
+      <table>
+        <view>
+          <datasource-dependencies>
+            <datasource caption='churn_scored_for_tableau' name='churn_scored_for_tableau'>
+              <column caption='risk_band' name='[risk_band]' role='dimension'/>
+              <column caption='customerID' name='[customerID]' role='dimension'/>
+              <column caption='revenue_at_risk' name='[revenue_at_risk]' role='measure'/>
+              <column caption='churn_probability' name='[churn_probability]' role='measure'/>
+            </datasource>
+          </datasource-dependencies>
+        </view>
+      </table>
+    </worksheet>
+  </worksheets>
+
+  <dashboards>
+    <dashboard name='Churn Management'>
+      <zones>
+        <zone type='layout-container' id='0'>
+          <zone type='worksheet' worksheet='Executive Overview' id='1'/>
+          <zone type='worksheet' worksheet='Segment Explorer' id='2'/>
+          <zone type='worksheet' worksheet='Action Playbook' id='3'/>
+        </zone>
+      </zones>
+    </dashboard>
+  </dashboards>
+
+  <formatted-strings/>
+</workbook>
